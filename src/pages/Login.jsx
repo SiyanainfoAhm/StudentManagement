@@ -165,9 +165,7 @@ export function Login() {
               </div>
             </div>
 
-            <div className="mt-6 text-xs text-slate-500">
-              This is a demo system. Ensure your Supabase project has the provided schema + seed SQL.
-            </div>
+
           </div>
         </div>
       </div>
