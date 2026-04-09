@@ -1,23 +1,35 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { Printer, Download } from 'lucide-react'
+import { Printer } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { dashboardService } from '../services/dashboardService.js'
-import { feeService } from '../services/feeService.js'
-import { attendanceService } from '../services/attendanceService.js'
 import { classService } from '../services/classService.js'
+import { supabase } from '../services/supabaseClient.js'
 import { formatMoneyINR } from '../utils/formatters.js'
 import { Button } from '../components/ui/Button.jsx'
 import { format, subDays } from 'date-fns'
+import { TABLES } from '../utils/constants.js'
 
-function downloadJson(name, obj) {
-  const blob = new Blob([JSON.stringify(obj, null, 2)], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = name
-  a.click()
-  URL.revokeObjectURL(url)
+function ChartSkeleton({ title, showTotal }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="flex items-center justify-between">
+        <div className="h-4 w-56 rounded bg-slate-100" />
+        {showTotal ? <div className="h-3 w-28 rounded bg-slate-100" /> : null}
+      </div>
+      <div className="mt-4 h-[280px] rounded-2xl bg-gradient-to-br from-slate-50 to-white ring-1 ring-slate-100 p-4">
+        <div className="grid h-full grid-cols-12 items-end gap-2">
+          {Array.from({ length: 12 }).map((_, i) => (
+            <div
+              key={i}
+              className="rounded-lg bg-slate-100"
+              style={{ height: `${30 + (i % 6) * 10}%` }}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export function Reports() {
@@ -36,28 +48,41 @@ export function Reports() {
           dashboardService.getFeesCollectionByMonth(),
         ])
 
-        // Attendance % summary (last 7 days) by class (simple + demo-friendly)
+        // Attendance % summary (last 7 days) by class
+        // Optimized: single query + client aggregation
         const cls = await classService.list()
-        const end = new Date()
-        const start = subDays(end, 6)
-        const days = []
-        for (let i = 0; i < 7; i++) days.push(format(subDays(end, 6 - i), 'yyyy-MM-dd'))
+        const startStr = format(subDays(new Date(), 6), 'yyyy-MM-dd')
 
-        const pctRows = []
-        for (const c of cls.slice(0, 8)) {
-          // for each class/day, load once; still ok for MVP size
-          let present = 0
-          let total = 0
-          for (const d of days) {
-            const res = await attendanceService.getForClassAndDate({ classId: c.id, date: d })
-            total += res.students.length
-            for (const s of res.students) {
-              if ((res.attendanceByStudentId?.[s.id]?.status || 'present') === 'present') present += 1
-            }
-          }
-          const pct = total === 0 ? 0 : Math.round((present / total) * 100)
-          pctRows.push({ label: `${c.class_name}-${c.section}`, pct })
+        const { data: att, error: attErr } = await supabase
+          .from(TABLES.attendance)
+          .select(
+            'status, student_management_students:student_id(class_id, student_management_classes:class_id(class_name,section))'
+          )
+          .gte('attendance_date', startStr)
+
+        if (attErr) throw attErr
+
+        const totals = new Map() // label -> { present, total }
+        for (const c of cls.slice(0, 10)) {
+          const label = `${c.class_name}-${c.section}`
+          totals.set(label, { present: 0, total: 0 })
         }
+
+        for (const row of att || []) {
+          const s = row.student_management_students
+          const c = s?.student_management_classes
+          if (!c) continue
+          const label = `${c.class_name}-${c.section}`
+          const agg = totals.get(label)
+          if (!agg) continue
+          agg.total += 1
+          if (row.status === 'present') agg.present += 1
+        }
+
+        const pctRows = Array.from(totals.entries()).map(([label, v]) => ({
+          label,
+          pct: v.total ? Math.round((v.present / v.total) * 100) : 0,
+        }))
 
         if (!ok) return
         setStudentsByClass(sbc)
@@ -75,16 +100,11 @@ export function Reports() {
     }
   }, [])
 
-  const exportPayload = useMemo(
-    () => ({ studentsByClass, feesByMonth, attendancePct, exportedAt: new Date().toISOString() }),
-    [studentsByClass, feesByMonth, attendancePct]
-  )
-
   const feesTotal = useMemo(() => feesByMonth.reduce((acc, x) => acc + Number(x.amount || 0), 0), [feesByMonth])
 
   return (
     <div className="space-y-4">
-      <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm print:hidden">
         <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
             <div className="text-sm text-slate-500">Summary</div>
@@ -101,26 +121,22 @@ export function Reports() {
               <Printer className="h-4 w-4" />
               Print
             </Button>
-            <Button
-              tone="indigo"
-              onClick={() => downloadJson('student-management-report.json', exportPayload)}
-            >
-              <Download className="h-4 w-4" />
-              Download JSON
-            </Button>
           </div>
         </div>
       </div>
 
-      {loading ? (
-        <div className="rounded-3xl border border-slate-200 bg-white p-6 text-sm text-slate-500 shadow-sm">
-          Loading reports…
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm xl:col-span-1">
+      <div className="printable-reports print:space-y-3">
+        {loading ? (
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-3 print:grid-cols-1">
+            <ChartSkeleton title="Student count by class" />
+            <ChartSkeleton title="Monthly fee collection" showTotal />
+            <ChartSkeleton title="Attendance % (last 7 days)" />
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 xl:grid-cols-3 print:grid-cols-1">
+          <div className="print-chart-card rounded-2xl border border-slate-200 bg-white p-4 shadow-sm xl:col-span-1">
             <div className="text-sm font-semibold text-slate-900">Student count by class</div>
-            <div className="mt-3 h-[280px]">
+            <div className="print-chart mt-3 h-[280px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={studentsByClass} layout="vertical" margin={{ left: 8, right: 8 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
@@ -133,12 +149,12 @@ export function Reports() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm xl:col-span-1">
+          <div className="print-chart-card rounded-2xl border border-slate-200 bg-white p-4 shadow-sm xl:col-span-1">
             <div className="flex items-center justify-between">
               <div className="text-sm font-semibold text-slate-900">Monthly fee collection</div>
               <div className="text-xs text-slate-500">Total: {formatMoneyINR(feesTotal)}</div>
             </div>
-            <div className="mt-3 h-[280px]">
+            <div className="print-chart mt-3 h-[280px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={feesByMonth} margin={{ left: 0, right: 8, top: 10, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
@@ -151,9 +167,9 @@ export function Reports() {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm xl:col-span-1">
+          <div className="print-chart-card rounded-2xl border border-slate-200 bg-white p-4 shadow-sm xl:col-span-1">
             <div className="text-sm font-semibold text-slate-900">Attendance % (last 7 days)</div>
-            <div className="mt-3 h-[280px]">
+            <div className="print-chart mt-3 h-[280px]">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={attendancePct} layout="vertical" margin={{ left: 8, right: 8 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
@@ -165,8 +181,9 @@ export function Reports() {
               </ResponsiveContainer>
             </div>
           </div>
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

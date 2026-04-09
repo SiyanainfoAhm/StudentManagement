@@ -59,7 +59,7 @@ function Topbar() {
   }, [location.pathname])
 
   return (
-    <div className="sticky top-0 z-20 border-b border-slate-200/70 bg-white/80 backdrop-blur">
+    <div className="sticky top-0 z-20 border-b border-slate-200/70 bg-white/80 backdrop-blur print:hidden">
       <div className="mx-auto flex h-16 max-w-[1400px] items-center justify-between px-4 lg:px-6">
         <div>
           <div className="text-sm text-slate-500">Student Management System</div>
@@ -90,7 +90,7 @@ export function AppShell() {
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="mx-auto flex max-w-[1400px]">
-        <aside className="sticky top-0 hidden h-screen w-[280px] shrink-0 flex-col border-r border-slate-200/70 bg-white px-4 py-5 lg:flex">
+        <aside className="sticky top-0 hidden h-screen w-[280px] shrink-0 flex-col border-r border-slate-200/70 bg-white px-4 py-5 lg:flex print:hidden">
           <Brand />
           <div className="mt-6 space-y-1">
             <SidebarItem to="/dashboard" icon={LayoutDashboard} label="Dashboard" />
@@ -106,7 +106,7 @@ export function AppShell() {
 
         <div className="min-w-0 flex-1">
           <Topbar />
-          <main className="mx-auto max-w-[1400px] px-4 py-6 lg:px-6">
+          <main className="mx-auto max-w-[1400px] px-4 py-6 lg:px-6 print:px-0 print:py-0 print:max-w-none">
             <Outlet />
           </main>
         </div>

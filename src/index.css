@@ -34,3 +34,46 @@ body {
   background-clip: content-box;
 }
 
+/* Print rules: only print report charts area */
+@media print {
+  @page {
+    margin: 12mm;
+  }
+
+  body {
+    background: #fff !important;
+  }
+
+  /* Avoid browser printing link URLs and extra chrome */
+  a[href]::after {
+    content: '';
+  }
+
+  /* Keep charts from splitting awkwardly */
+  .printable-reports > * {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Print one chart card per page to avoid cut-off */
+  .print-chart-card {
+    break-inside: avoid;
+    page-break-inside: avoid;
+    page-break-after: always;
+  }
+  .print-chart-card:last-child {
+    page-break-after: auto;
+  }
+
+  /* Give charts a bit more stable height in print */
+  .print-chart {
+    height: 320px !important;
+  }
+
+  /* Slightly reduce padding/shadows for clean paper */
+  .printable-reports .shadow-sm,
+  .printable-reports .shadow {
+    box-shadow: none !important;
+  }
+}
+
