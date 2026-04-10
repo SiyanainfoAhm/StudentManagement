@@ -62,6 +62,30 @@ VITE_SUPABASE_ANON_KEY=...
 npm run dev
 ```
 
+## Deploy on Vercel (production)
+
+This app is a **Vite SPA** with **React Router**. Two things usually break on Vercel if missed:
+
+### 1. Environment variables (most common)
+
+Vite only reads variables that start with **`VITE_`**, and they are **baked in at build time**.
+
+1. In Vercel: **Project → Settings → Environment Variables**
+2. Add for **Production** (and Preview if you use it):
+   - `VITE_SUPABASE_URL` = your Supabase project URL
+   - `VITE_SUPABASE_ANON_KEY` = your Supabase anon public key
+3. **Redeploy** after adding or changing these (Deployments → … → Redeploy). Old builds will still have empty URLs and Supabase will fail.
+
+Do **not** rely on `.env` in the repo; it is not used on Vercel unless you commit it (not recommended).
+
+### 2. Client-side routes (refresh / direct URL)
+
+The repo includes **`vercel.json`** so paths like `/login` or `/dashboard` serve `index.html` instead of 404. If you removed it, add the rewrite back.
+
+### 3. Supabase
+
+If login/API calls fail only in production, confirm the anon key and URL match the project where you ran the SQL seed. CORS is normally fine for browser clients using the anon key.
+
 ## Modules
 
 - **Login**: premium split-screen + clickable demo credential cards
@@ -69,7 +93,5 @@ npm run dev
 - **Students**: searchable list, filters, add/edit modal, delete (admin only)
 - **Attendance**: date + class selector, bulk present/absent, upsert save (no duplicates)
 - **Fees**: filter by status/class/mode, add/edit payment modal, summary cards
-- **Reports**: printable summaries + download JSON export
+- **Reports**: printable chart summaries
 - **Users** (admin only): add/edit, active toggle, reset password
-
-# StudentManagement
