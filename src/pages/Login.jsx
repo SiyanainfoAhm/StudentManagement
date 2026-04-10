@@ -86,7 +86,7 @@ export function Login() {
             </div>
 
             <div className="mt-auto text-xs text-white/45">
-              Tip: Use the demo credentials on the right for a smooth presentation.
+              Tip: Use the demo credentials on the right for a smooth login.
             </div>
           </div>
         </div>
