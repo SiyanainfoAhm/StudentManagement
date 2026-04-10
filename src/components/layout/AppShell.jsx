@@ -9,6 +9,7 @@ import {
   FileText,
   Settings,
   LogOut,
+  CalendarRange,
 } from 'lucide-react'
 import { useAuth } from '../../hooks/useAuth.js'
 import { ROLES } from '../../utils/constants.js'
@@ -55,6 +56,7 @@ function Topbar() {
     if (p.includes('/fees')) return 'Fees'
     if (p.includes('/reports')) return 'Reports'
     if (p.includes('/users')) return 'Users'
+    if (p.includes('/holidays')) return 'Holidays'
     return 'Dashboard'
   }, [location.pathname])
 
@@ -98,6 +100,7 @@ export function AppShell() {
             <SidebarItem to="/attendance" icon={ClipboardCheck} label="Attendance" />
             <SidebarItem to="/fees" icon={IndianRupee} label="Fees" />
             <SidebarItem to="/reports" icon={FileText} label="Reports" />
+            <SidebarItem to="/holidays" icon={CalendarRange} label="Holidays" />
             {isAdmin ? <SidebarItem to="/users" icon={UsersRound} label="Users" /> : null}
           </div>
 

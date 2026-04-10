@@ -22,8 +22,8 @@ Meeting-ready demo admin system built with **React (Vite) + JavaScript + Tailwin
 - **Passwords stored as `password_hash`** (bcrypt)
 - **Session stored in localStorage**
 - **Roles**: `admin`, `teacher`
-  - Teacher can access: Dashboard, Students, Attendance, Fees, Reports
-  - Teacher cannot access: Users module, destructive actions (e.g. deleting students)
+  - Teacher can access: Dashboard, Students, Attendance, Fees, Reports, Holidays (view only)
+  - Teacher cannot access: Users module, holiday CRUD, destructive actions (e.g. deleting students)
 
 ## Demo credentials (seeded)
 
@@ -38,7 +38,8 @@ Password pattern: **Fname.Lastname@123**
 
 1. Create a Supabase project
 2. In Supabase SQL editor, run:
-   - `supabase/student_management_schema_and_seed.sql`
+   - `supabase/student_management_schema_and_seed.sql` (new project), **or**
+   - `supabase/student_management_holidays_migration.sql` if you already ran the base schema and only need the holidays table
 3. Get your project URL + anon key
 
 ## Setup (local)
@@ -94,4 +95,5 @@ If login/API calls fail only in production, confirm the anon key and URL match t
 - **Attendance**: date + class selector, bulk present/absent, upsert save (no duplicates)
 - **Fees**: filter by status/class/mode, add/edit payment modal, summary cards
 - **Reports**: printable chart summaries
+- **Holidays**: school holidays with **start/end dates** (multi-day rows, e.g. Diwali week); **teachers view only**, **admins** full CRUD
 - **Users** (admin only): add/edit, active toggle, reset password

@@ -91,6 +91,20 @@ create table if not exists public.student_management_fees (
 );
 
 -- =========================
+-- 5b. HOLIDAYS (multi-day: one row = start_date .. end_date inclusive)
+-- =========================
+create table if not exists public.student_management_holidays (
+    id uuid primary key default gen_random_uuid(),
+    name varchar(200) not null,
+    start_date date not null,
+    end_date date not null,
+    description text,
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now(),
+    constraint student_management_holidays_dates_valid check (end_date >= start_date)
+);
+
+-- =========================
 -- 6. UPDATED_AT TRIGGER
 -- =========================
 create or replace function public.student_management_set_updated_at()
@@ -128,6 +142,11 @@ create trigger trg_student_management_fees_updated_at
 before update on public.student_management_fees
 for each row execute function public.student_management_set_updated_at();
 
+drop trigger if exists trg_student_management_holidays_updated_at on public.student_management_holidays;
+create trigger trg_student_management_holidays_updated_at
+before update on public.student_management_holidays
+for each row execute function public.student_management_set_updated_at();
+
 -- =========================
 -- 7. INDEXES
 -- =========================
@@ -154,6 +173,15 @@ on public.student_management_fees(status);
 
 create index if not exists idx_student_management_users_email
 on public.student_management_users(email);
+
+create index if not exists idx_student_management_holidays_start
+on public.student_management_holidays(start_date);
+
+create index if not exists idx_student_management_holidays_end
+on public.student_management_holidays(end_date);
+
+create index if not exists idx_student_management_holidays_range
+on public.student_management_holidays(start_date, end_date);
 
 -- =========================
 -- 8. SEED CLASSES
@@ -255,6 +283,15 @@ select
   case when random() > 0.35 then 'paid' else 'pending' end,
   'Monthly tuition fee'
 from public.student_management_students s;
+
+-- =========================
+-- 12b. SEED HOLIDAYS (examples: single day + multi-day)
+-- =========================
+insert into public.student_management_holidays (name, start_date, end_date, description)
+values
+('Republic Day', (current_date + 30), (current_date + 30), 'National holiday'),
+('Diwali break', (current_date + 60), (current_date + 65), 'School closed — 6 calendar days'),
+('Holi', (current_date + 120), (current_date + 120), 'Festival holiday');
 
 -- =========================
 -- 13. HELPER VIEW - DASHBOARD SUMMARY

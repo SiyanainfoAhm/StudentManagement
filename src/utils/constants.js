@@ -13,6 +13,7 @@ export const TABLES = {
   attendance: 'student_management_attendance',
   fees: 'student_management_fees',
   users: 'student_management_users',
+  holidays: 'student_management_holidays',
   dashboardSummaryView: 'student_management_dashboard_summary',
 }
 

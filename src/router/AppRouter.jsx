@@ -11,6 +11,7 @@ import { Attendance } from '../pages/Attendance.jsx'
 import { Fees } from '../pages/Fees.jsx'
 import { Reports } from '../pages/Reports.jsx'
 import { Users } from '../pages/Users.jsx'
+import { Holidays } from '../pages/Holidays.jsx'
 
 function FullPageLoader() {
   return (
@@ -99,6 +100,14 @@ export function AppRouter() {
             element={
               <RequireRouteAccess routeKey="users">
                 <Users />
+              </RequireRouteAccess>
+            }
+          />
+          <Route
+            path="holidays"
+            element={
+              <RequireRouteAccess routeKey="holidays">
+                <Holidays />
               </RequireRouteAccess>
             }
           />
