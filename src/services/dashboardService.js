@@ -10,9 +10,9 @@ function monthLabel(year, month) {
 
 export const dashboardService = {
   async getSummary() {
-    const { data, error } = await supabase.from(TABLES.dashboardSummaryView).select('*').limit(1)
+    const { data, error } = await supabase.from(TABLES.dashboardSummaryView).select('*').maybeSingle()
     if (error) throw error
-    return data?.[0] || null
+    return data || null
   },
 
   async getAttendanceOverviewWeek() {

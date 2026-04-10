@@ -18,6 +18,7 @@ export async function loginWithEmailPassword({ email, password }) {
     .from(TABLES.users)
     .select('*')
     .eq('email', cleanEmail)
+    .order('id', { ascending: true })
     .limit(1)
     .maybeSingle()
 
@@ -38,6 +39,7 @@ export async function getUserById(id) {
       'id, name, first_name, last_name, email, mobile, role, is_active, created_at, updated_at'
     )
     .eq('id', id)
+    .order('id', { ascending: true })
     .limit(1)
     .maybeSingle()
 

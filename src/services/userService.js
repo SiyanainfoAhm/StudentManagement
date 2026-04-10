@@ -12,7 +12,12 @@ export const userService = {
   },
 
   async create(payload) {
-    const { data, error } = await supabase.from(TABLES.users).insert(payload).select('*').limit(1)
+    const { data, error } = await supabase
+      .from(TABLES.users)
+      .insert(payload)
+      .select('*')
+      .order('id', { ascending: true })
+      .limit(1)
     if (error) throw error
     return data?.[0] || null
   },
@@ -23,6 +28,7 @@ export const userService = {
       .update(payload)
       .eq('id', id)
       .select('*')
+      .order('id', { ascending: true })
       .limit(1)
     if (error) throw error
     return data?.[0] || null
