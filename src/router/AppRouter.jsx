@@ -5,6 +5,7 @@ import { canAccess } from '../hooks/useRoleAccess.js'
 import { AppShell } from '../components/layout/AppShell.jsx'
 
 import { Login } from '../pages/Login.jsx'
+import { StudentDocumentDiscovery } from '../pages/StudentDocumentDiscovery.jsx'
 import { Dashboard } from '../pages/Dashboard.jsx'
 import { Students } from '../pages/Students.jsx'
 import { Attendance } from '../pages/Attendance.jsx'
@@ -44,6 +45,7 @@ export function AppRouter() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/student-documents" element={<StudentDocumentDiscovery />} />
 
         <Route
           path="/"
